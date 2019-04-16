@@ -1,0 +1,178 @@
+from numba import jit
+
+import numpy as np
+from Code.Vehicle import Vehicle
+from Code.Order import Package
+from Code.Network import Network
+
+# 定义站点数量
+Stop_Number = 6
+Density = 0.5
+# 生成物流网络
+Graph = Network(Stop_Number)
+Graph.Generate_Graph(Density)
+
+# 定义车辆数量
+Vehicle_Number = 15
+Vehicle_Set = locals()
+for i in range(Vehicle_Number):
+    Vehicle_Set[str(i)] = Vehicle(i)
+
+# 定义订单
+Package_Set = locals()
+
+# 定义配送状态记录
+Records = np.zeros([Stop_Number, 0])
+
+# 定义系统时间点
+T_System = 50
+# 定义事件时间点
+T_Event = 30
+
+
+
+# 先生成部分订单，根据现有订单进行规划
+# 在下一个时间点，在不同集中站点随机生成部分订单
+@jit(nopython=True)
+def Main_Func():
+    Event_T = 0
+    OrderID_Last = -1
+    UnRellocated_Order = []
+    NewOrder_Status = 0
+    NewVehicle_Status = 0
+    for System_T in range(T_System):
+
+        # 依据某一随机分布，在各集中站点生成订单
+        OrderID_New, UnRellocated_Order = Generate_Order_Step(System_T, OrderID_Last, UnRellocated_Order)
+
+        if(OrderID_New == OrderID_Last):
+            # 无新订单出现
+            NewOrder_Status = 0
+        else:
+            NewOrder_Status = 1
+            # 更新状态矩阵
+            Record_new = np.zeros([Stop_Number, OrderID_Last-OrderID_New])
+            Records = np.hstack((Records, Record_new))
+            OrderID_Last = OrderID_New
+
+        # 判定是否有车辆到达站点
+        Arrival_List = Check_Vehicle_Status(System_T)
+
+        if(len(Arrival_List) == 0):
+            # 无车辆到站
+            NewVehicle_Status = 0
+        else:
+            NewVehicle_Status = 1
+            # 对于已到站点的车，搭载的包裹全部卸下（包裹当前起始点发生变化、当前状态由1换为0）、配送记录发生变化
+            UnRellocated_Order = Find_Package_Vehicle(System_T, Arrival_List, UnRellocated_Order)
+
+        # 问题：有新包裹出现，但是没有车辆出现？
+        # 等待车辆出现（保持unRellocated状态不变）
+
+        if(NewVehicle_Status == 1):
+            # 有车靠站
+
+            # 针对未分配包裹list（UnRellocated_Order）和已到站点车辆（Arrival_List），进行ADP规划
+            # 获取x[i][j], y[i][N]
+
+            # ADP算法
+
+
+            # 根据获取的决策变量，更新Vehicle, Order, Records
+
+            # 推进事件时间点
+            Event_T += 1
+        else:
+            pass
+
+        # 推进时间System_T
+        System_T += 1
+
+        if(Event_T >= T_Event):
+            break
+
+
+
+# 依据当前系统时间生成各站点订单
+@jit(nopython=True)
+def Generate_Order_Step(System_T, OrderID_Last, UnRellocated_Order):
+    Stop_Basic = np.random.rand(Stop_Number)
+    # 定义各站点出现包裹的随机分布（当前是否有包裹、包裹数量、包裹目的地、包裹要求到达时间）
+    # 假设都为均匀分布
+    # 一次至多出现5个包裹
+    Max_Appear = 5
+    for i in range(Stop_Number):
+        if(Stop_Basic[i]>=0.8):
+            # 有包裹出现
+            Order_Num = np.random.randint(1, Max_Appear)
+            for Order_item in range(Order_Num):
+                # 生成包裹目的地
+                Destination = np.random.randint(Stop_Number)
+                while Destination==i:
+                    Destination = np.random.randint(Stop_Number)
+                
+                # 生成要求到达时间
+                Last_Time = np.random.randint(System_T+1, T_System)
+
+                # 创建包裹
+                OrderID_Last = OrderID_Last + 1
+                Package_Set[str(OrderID_Last)]=Package(OrderID_Last)
+                Package_Set[str(OrderID_Last)].Generate_Package(i, Destination, Last_Time)
+
+                # 将未分配包裹加入list
+                UnRellocated_Order.append(OrderID_Last)
+    return OrderID_Last, UnRellocated_Order
+
+# 判断是否有车辆到达站点
+@jit(nopython=True)
+def Check_Vehicle_Status(System_T):
+    Arrival_List = []
+    for i in range(Vehicle_Number):
+        Arrival_Time = Vehicle_Set[str(i)].Apr_Time
+        # 如果抵达站点的时间为当前系统时间
+        if(Arrival_Time == System_T):
+            # 记录到站点的车
+            Arrival_List.append(i)
+            # 更改车的属性（当前位置、下一抵达站点、下一抵达站点的时间）
+            Cur_Location = Vehicle_Set[str(i)].Cur_Location[1]
+            Cur_Location = np.ones(2)*Cur_Location
+            Nex_Location = -1
+            Apr_Time = 0
+            Vehicle_Set[str(i)].Update_Vehicle(Cur_Location, Nex_Location, Apr_Time)
+
+    return Arrival_List
+
+# 找到每辆已到站点的车搭载的包裹
+@jit(nopython=True)
+def Find_Package_Vehicle(System_T, Arrival_List, UnRellocated_Order):
+    # 需要找到车辆i搭载的全部包裹j
+    for i in Arrival_List:
+        # 取出第i辆车的行数据
+        Records_I = Records[[i]]
+        OrderList_I = np.flatnonzero(Records_I)
+        for j in OrderList_I:
+            # 包裹当前起始点发生变化、当前状态由1换为0、配送记录发生变化
+
+            # 包裹当前起始点更新
+            Cur_Origins = Vehicle_Set[str(i)].Cur_Location[0]
+            # 当前状态发生变化
+            Cur_State = 0
+
+            Package_Set[str(j)].Update_Package(Cur_Origins, Cur_State)
+
+            # 配送记录发生变化
+            Records[i][j] = 0
+
+            # 更新未分配list
+            UnRellocated_Order.append(j)
+    return UnRellocated_Order
+
+
+
+
+        
+
+
+
+
+    
