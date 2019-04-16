@@ -5,32 +5,6 @@ from Code.Vehicle import Vehicle
 from Code.Order import Package
 from Code.Network import Network
 
-# 定义站点数量
-Stop_Number = 6
-Density = 0.5
-# 生成物流网络
-Graph = Network(Stop_Number)
-Graph.Generate_Graph(Density)
-
-# 定义车辆数量
-Vehicle_Number = 15
-Vehicle_Set = locals()
-for i in range(Vehicle_Number):
-    Vehicle_Set[str(i)] = Vehicle(i)
-
-# 定义订单
-Package_Set = locals()
-
-# 定义配送状态记录
-Records = np.zeros([Stop_Number, 0])
-
-# 定义系统时间点
-T_System = 50
-# 定义事件时间点
-T_Event = 30
-
-
-
 # 先生成部分订单，根据现有订单进行规划
 # 在下一个时间点，在不同集中站点随机生成部分订单
 @jit(nopython=True)
@@ -90,8 +64,6 @@ def Main_Func():
 
         if(Event_T >= T_Event):
             break
-
-
 
 # 依据当前系统时间生成各站点订单
 @jit(nopython=True)
@@ -167,8 +139,33 @@ def Find_Package_Vehicle(System_T, Arrival_List, UnRellocated_Order):
             UnRellocated_Order.append(j)
     return UnRellocated_Order
 
+if __name__ == "__main__":
+    
+    # 定义站点数量
+    Stop_Number = 6
+    Density = 0.5
+    # 生成物流网络
+    Graph = Network(Stop_Number)
+    Graph.Generate_Graph(Density)
 
+    # 定义车辆数量
+    Vehicle_Number = 15
+    Vehicle_Set = locals()
+    for i in range(Vehicle_Number):
+        Vehicle_Set[str(i)] = Vehicle(i)
 
+    # 定义订单
+    Package_Set = locals()
+
+    # 定义配送状态记录
+    Records = np.zeros([Stop_Number, 0])
+
+    # 定义系统时间点
+    T_System = 50
+    # 定义事件时间点
+    T_Event = 30
+
+    Main_Func()
 
         
 
