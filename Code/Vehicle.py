@@ -14,4 +14,5 @@ class Vehicle:
         self.Cur_Location = Cur_Location
         self.Nex_Location = Nex_Location
         self.Apr_Time = Apr_Time
+        return
 

@@ -15,4 +15,5 @@ class Network:
                 if(Temp1 <= Density):
                     Length = int(np.random.rand()*10)
                     self.Graph[i][j] = Length
+        return
 

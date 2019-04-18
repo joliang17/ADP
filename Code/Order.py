@@ -13,8 +13,16 @@ class Package:
         self.Latest_Time = Latest_Time
         self.Destination = Destination
         self.Cur_Origins = Origins
+        return
 
-    def Update_Package(self, Cur_Origins, Cur_State):
+    # 车辆到站，卸货
+    def Update_Package_BeforeD(self, Cur_Origins, Cur_State):
         self.Cur_Origins = Cur_Origins
         self.Cur_State = Cur_State
+        return
+
+    # 上车
+    def Update_Package_AfterD(self, Cur_State):
+        self.Cur_State = Cur_State
+        return
 
