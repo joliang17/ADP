@@ -1,6 +1,7 @@
 from numba import jit
 
 import numpy as np
+
 from Code.Vehicle import Vehicle
 from Code.Order import Package
 from Code.Network import Network
@@ -71,6 +72,7 @@ def Main_Func(Stop_Number, Graph, T_System, T_Event, Vehicle_Number, Vehicle_Set
 
         if(Event_T >= T_Event):
             break
+    return
 
 # 根据决策向量更新状态(更新当前记录R, 订单状态f, 下一站点，预计到达时间，当前位置)
 # 如果是车辆从其他集中站点过来接包裹呢?
@@ -117,7 +119,7 @@ def Generate_Order_Step(System_T, OrderID_Last, Package_Set, UnRellocated_Order,
         if(Stop_Basic[i]>=0.8):
             # 有包裹出现
             Order_Num = np.random.randint(1, Max_Appear)
-            for Order_item in range(Order_Num):
+            for j in range(Order_Num):
                 # 生成包裹目的地
                 Destination = np.random.randint(Stop_Number)
                 while Destination==i:
@@ -193,6 +195,7 @@ if __name__ == "__main__":
     # 生成物流网络
     Graph = Network(Stop_Number)
     Graph.Generate_Graph(Density)
+    Shortest_Path = Graph.Gain_Shortest_Path(Stop_Number)
 
     # 定义车辆数量
     Vehicle_Number = 15
