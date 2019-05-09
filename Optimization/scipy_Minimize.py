@@ -2,10 +2,9 @@ from scipy.optimize import minimize
 import numpy as np
 
 
-def Prepare_Variables(x, y, Vehicle_Number, Shortest_Matrix, Cur_Loc_Veh, Cur_Loc_Pac, Rat_Load, Weight_Pac, Records, UnRellocated_Order, Transport_Order):
+def Prepare_Variables_Cost(x, Vehicle_Number, Shortest_Matrix, Cur_Loc_Veh, Cur_Loc_Pac, Rat_Load, Weight_Pac, Records, UnRellocated_Order, Transport_Order):
     # 决策变量
     x = np.mat(x, dtype=np.int)
-    y = np.mat(y, dtype=np.int)
 
     # 生成车辆当前位置与包裹当前位置的距离矩阵
     # SH[i][j]: 车辆i与包裹j之间的距离【Cur_Loc_Veh[i], Cur_Loc_Pac[j]】
@@ -31,16 +30,16 @@ def Prepare_Variables(x, y, Vehicle_Number, Shortest_Matrix, Cur_Loc_Veh, Cur_Lo
     # 配送记录
     Records_Matrix = np.mat(Records, dtype=np.int)
 
-    return x, y, Weight_UnRellocated, Weight_Rellocated, Rat_Load, Records_Matrix, Veh_Pack_Distance
+    return x, Weight_UnRellocated, Weight_Rellocated, Rat_Load, Records_Matrix, Veh_Pack_Distance
 
 
-def CostF(x, y, Vehicle_Number, Shortest_Matrix, Cur_Loc_Veh, Cur_Loc_Pac, Rat_Load, Weight_Pac, Records, UnRellocated_Order, Transport_Order):
+def CostF(x, Vehicle_Number, Shortest_Matrix, Cur_Loc_Veh, Cur_Loc_Pac, Rat_Load, Weight_Pac, Records, UnRellocated_Order, Transport_Order):
 
     p1 = 3
     p2 = 5
 
-    x, y, Weight_UnRellocated, Weight_Rellocated, Rat_Load, Records_Matrix, Veh_Pack_Distance = Prepare_Variables(
-        x, y, Vehicle_Number, Shortest_Matrix, Cur_Loc_Veh, Cur_Loc_Pac, Rat_Load, Weight_Pac, Records, UnRellocated_Order, Transport_Order)
+    x, Weight_UnRellocated, Weight_Rellocated, Rat_Load, Records_Matrix, Veh_Pack_Distance = Prepare_Variables_Cost(
+        x, Vehicle_Number, Shortest_Matrix, Cur_Loc_Veh, Cur_Loc_Pac, Rat_Load, Weight_Pac, Records, UnRellocated_Order, Transport_Order)
 
     Cost_Distance = p1*sum(np.multiply(x, Veh_Pack_Distance))
 
@@ -65,14 +64,13 @@ def CostF(x, y, Vehicle_Number, Shortest_Matrix, Cur_Loc_Veh, Cur_Loc_Pac, Rat_L
 
     return CostValue
 
-def ValueF(x, y, Stop_Number, Vehicle_Number, Shortest_Matrix, Cur_Loc_Veh, Cur_Loc_Pac, Dest_Pak, Rat_Load, Weight_Pac, Records, UnRellocated_Order, Transport_Order):
-
-    c1 = 1
-    c2 = 2
-
-
+def Prepare_Variables_Value(x, y, Stop_Number, Vehicle_Number, Shortest_Matrix, Dest_Pak, Latest_Time, Records, UnRellocated_Order, Transport_Order, System_T):
     x = np.mat(x, dtype=np.int)
     y = np.mat(y, dtype=np.int)
+
+    # 各集中站点之间的最短路
+    Shortest_Matrix = np.mat(Shortest_Matrix, dtype=float)
+
     # 配送记录
     Records_Matrix = np.mat(Records, dtype=np.int)
 
@@ -96,6 +94,20 @@ def ValueF(x, y, Stop_Number, Vehicle_Number, Shortest_Matrix, Cur_Loc_Veh, Cur_
     Dest_UnRellocated_Matrix = np.mat(Dest_UnRellocated_Matrix, dtype=np.int)
     Dest_Rellocated_Matrix = np.mat(Dest_Rellocated_Matrix, dtype=np.int)
 
+    # 待分配包裹最晚到达时间列表
+    Latest_Time_UnRellocated = [Latest_Time[i]-System_T for i in UnRellocated_Order]
+    Latest_Time_UnRellocated = np.mat(Latest_Time_UnRellocated, dtype=float)
+
+    return x, y, Shortest_Matrix, Records_Matrix, Dest_UnRellocated_Matrix, Dest_Rellocated_Matrix, Latest_Time_UnRellocated
+
+
+def ValueF(x, y, Stop_Number, Vehicle_Number, Shortest_Matrix, Dest_Pak, Latest_Time, Records, UnRellocated_Order, Transport_Order, System_T):
+
+    c1 = 1
+    c2 = 2
+
+    x, y, Shortest_Matrix, Records_Matrix, Dest_UnRellocated_Matrix, Dest_Rellocated_Matrix, Latest_Time_UnRellocated = Prepare_Variables_Value(x, y, Stop_Number, Vehicle_Number, Shortest_Matrix, Dest_Pak, Latest_Time, Records, UnRellocated_Order, Transport_Order, System_T)    
+
     # 显示车辆i上搭载几个前往终点k的未分配包裹数量矩阵
     Veh_UnRellocated_Number = np.dot(x, Dest_UnRellocated_Matrix)
     
@@ -118,9 +130,20 @@ def ValueF(x, y, Stop_Number, Vehicle_Number, Shortest_Matrix, Cur_Loc_Veh, Cur_
     Col_Pack_Dest_Same = map(sum, Same_Veh_Dest_Pack)
 
     # 显示同终点的占比
-    Value_Dest = c1*sum(np.divide(Same_Veh_Dest_Pack,Same_Veh_Dest))
+    Value_Dest = c1*sum(np.divide(Col_Pack_Dest_Same, Col_Pack_Dest_All))
 
+    # 待分配包裹与下一步被分配站点的0-1矩阵关系
+    Next_Stop = np.dot(x.T, y)
 
+    # 待分配包裹j下一站站点与各终点之间的距离
+    Next_Final_Dis = np.dot(Next_Stop, Shortest_Matrix)
 
+    # 待分配包裹j下一站点与其终点之间的距离
+    Next_Final_Dis_Spe = np.multiply(Next_Final_Dis, Dest_UnRellocated_Matrix)
+    Col_Next_Final_Dis = map(sum, Next_Final_Dis_Spe)
 
+    Value_Time = c2*sum(np.subtract(Latest_Time_UnRellocated, Col_Next_Final_Dis))
+
+    ApproximateValue = Value_Dest + Value_Time
+    
     return ApproximateValue
