@@ -163,7 +163,9 @@ def ValueF(self, x, y):
 
     return ApproximateValue
 
-def Objective_Function(self, AllDecision):
+def Objective_Function(AllDecision, args):
+    self = args[0]
+
     # 决策变量: i*j 
     x = AllDecision[0:self.Vehicle_Number*len(self.UnRellocated_Order)]
     x = x.reshapre((self.Vehicle_Number, len(self.UnRellocated_Order)))
@@ -271,5 +273,5 @@ def Minimize_Main(self):
     VehAllCons = {'type': 'eq', 'fun': Veh_Cons}
     cons = [WeighCons, PackAllCons, VehAllCons]
 
-    sol = minimize(Objective_Function, x0, method='SLSQP', bounds=bnds, constraints=cons)
+    sol = minimize(Objective_Function, x0, args=(self,), method='SLSQP', bounds=bnds, constraints=cons)
     return sol.x, sol.fun
