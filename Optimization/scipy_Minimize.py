@@ -210,6 +210,12 @@ def Weight_Cons(self, AllDecision):
     # 车辆上剩余空余重量: i*1 
     Remain_Weight = Rat_Load - UnRellocated_Veh_Weight - Rellocated_Veh_Weight
 
+    # 找出超重车辆
+    Remain_Weight = Remain_Weight[Remain_Weight<0]
+    
+    # 找出超重重量
+    Remain_Weight = sum(abs(Remain_Weight))
+
     return Remain_Weight
 
 def Pack_Cons(self, AllDecision):
@@ -226,6 +232,9 @@ def Pack_Cons(self, AllDecision):
     # 1*j
     PackAllocation = Ones - X_Sum
 
+    # 找出不等于1的包裹（未分配包裹）
+    PackAllocation = PackAllocation[PackAllocation != 1]
+    PackAllocation = sum(abs(PackAllocation))
     return PackAllocation
 
 def Veh_Cons(self, AllDecision):
@@ -241,6 +250,10 @@ def Veh_Cons(self, AllDecision):
 
     # i*1
     VehAllocation = Ones-Y_Sum
+
+    # 找出不等于1的车辆（未分配下一站点或多分配了）
+    VehAllocation = VehAllocation[VehAllocation != 1]
+    VehAllocation = sum(abs(VehAllocation))
 
     return VehAllocation
 
