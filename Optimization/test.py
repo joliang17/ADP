@@ -1,14 +1,25 @@
 #%%
 import numpy as np
 
+#%%
+Vehnum = 6
+packnum = 8
+stopnum = 6
+column1 = bnds=np.array((np.zeros(Vehnum),np.ones(Vehnum))).T
 
-#%% 
-A = np.arange(4,6).reshape(1,2)
-A
+column1
 
 #%%
-B = np.arange(1,5).reshape(2,2)
-B
+x = np.array([1, 2, 3, 4, 5, 6, 7, 8])
+x
 
 #%%
-A*B
+x1 = x[:6]
+x1
+
+#%%
+x1.reshape((2,3))
+
+#%%
+x2 = x[6:]
+x2
