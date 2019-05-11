@@ -182,7 +182,8 @@ def Objective_Function(AllDecision, args):
     objectiveValue = CostValue + ApprValue
     return objectiveValue
 
-def Weight_Cons(self, AllDecision):
+def Weight_Cons(AllDecision, args):
+    self = args[0]
     # 决策变量: i*j 
     x = AllDecision[0:self.Vehicle_Number*len(self.UnRellocated_Order)]
     x = x.reshapre((self.Vehicle_Number, len(self.UnRellocated_Order)))
@@ -220,7 +221,8 @@ def Weight_Cons(self, AllDecision):
 
     return Remain_Weight
 
-def Pack_Cons(self, AllDecision):
+def Pack_Cons(AllDecision, args):
+    self = args[0]
     # 决策变量
     x = AllDecision[:self.Vehicle_Number*len(self.UnRellocated_Order)]
     x = x.reshapre((self.Vehicle_Number, len(self.UnRellocated_Order)))
@@ -239,7 +241,8 @@ def Pack_Cons(self, AllDecision):
     PackAllocation = sum(abs(PackAllocation))
     return PackAllocation
 
-def Veh_Cons(self, AllDecision):
+def Veh_Cons(AllDecision, args):
+    self = args[0]
     # 决策变量
     y = AllDecision[self.Vehicle_Number*len(self.UnRellocated_Order):]
     y = y.reshapre((self.Vehicle_Number, self.Stop_Number))
@@ -268,10 +271,10 @@ def Generate_DecisionVar(self):
 
 def Minimize_Main(self):
     x0, bnds = Generate_DecisionVar(self)
-    WeighCons = {'type': 'ineq', 'fun': Weight_Cons}
-    PackAllCons = {'type': 'eq', 'fun': Pack_Cons}
-    VehAllCons = {'type': 'eq', 'fun': Veh_Cons}
-    cons = [WeighCons, PackAllCons, VehAllCons]
+    WeighCons = {'type': 'ineq', 'fun': Weight_Cons, 'args': (self,)}
+    PackAllCons = {'type': 'eq', 'fun': Pack_Cons, 'args': (self,)}
+    VehAllCons = {'type': 'eq', 'fun': Veh_Cons, 'args': (self,)}
+    cons = (WeighCons, PackAllCons, VehAllCons)
 
     sol = minimize(Objective_Function, x0, args=(self,), method='SLSQP', bounds=bnds, constraints=cons)
     return sol.x, sol.fun
