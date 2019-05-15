@@ -5,6 +5,11 @@ class CA(object):
 
     def __init__(self):
         self.obj_pre = 'bbbbb'
+
+    def print_Name(self):
+        print(cls_pre)
+
+        return
 #%%
 a = CA()
 b = CA()

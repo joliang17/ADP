@@ -2,39 +2,23 @@ from scipy.optimize import minimize
 import numpy as np
 
 class Minimize:
-
-    c = [0,0]
-    p = [0,0]
-    Stop_Number = 0
-    Vehicle_Number = 0
-    Shortest_Matrix = np.matrix([[0,0],[0,0]], dtype=float)
-    Cur_Loc_Veh = []
-    Cur_Loc_Pac = []
-    Dest_Pak = []
-    Rat_Load = []
-    Weight_Pac = []
-    Latest_Time = []
-    Records = []
-    UnRellocated_Order = []
-    Transport_Order = []
-    System_T = 0
     
-    # def __init__(self, c, p, Stop_Number, Vehicle_Number, Shortest_Matrix, Cur_Loc_Veh, Cur_Loc_Pac, Dest_Pak, Rat_Load, Weight_Pac, Latest_Time, Records, UnRellocated_Order, Transport_Order, System_T):
-    #     self.c = c
-    #     self.p = p
-    #     self.Stop_Number = Stop_Number
-    #     self.Vehicle_Number = Vehicle_Number
-    #     self.Shortest_Matrix = Shortest_Matrix
-    #     self.Cur_Loc_Veh = Cur_Loc_Veh
-    #     self.Cur_Loc_Pac = Cur_Loc_Pac
-    #     self.Dest_Pak = Dest_Pak
-    #     self.Rat_Load = Rat_Load
-    #     self.Weight_Pac = Weight_Pac
-    #     self.Latest_Time = Latest_Time
-    #     self.Records = Records
-    #     self.UnRellocated_Order = UnRellocated_Order
-    #     self.Transport_Order = Transport_Order
-    #     self.System_T = System_T
+    def __init__(self, c, p, Stop_Number, Vehicle_Number, Shortest_Matrix, Cur_Loc_Veh, Cur_Loc_Pac, Dest_Pak, Rat_Load, Weight_Pac, Latest_Time, Records, UnRellocated_Order, Transport_Order, System_T):
+        self.c = c
+        self.p = p
+        self.Stop_Number = Stop_Number
+        self.Vehicle_Number = Vehicle_Number
+        self.Shortest_Matrix = Shortest_Matrix
+        self.Cur_Loc_Veh = Cur_Loc_Veh
+        self.Cur_Loc_Pac = Cur_Loc_Pac
+        self.Dest_Pak = Dest_Pak
+        self.Rat_Load = Rat_Load
+        self.Weight_Pac = Weight_Pac
+        self.Latest_Time = Latest_Time
+        self.Records = Records
+        self.UnRellocated_Order = UnRellocated_Order
+        self.Transport_Order = Transport_Order
+        self.System_T = System_T
 
 def Prepare_Variables_Cost(self):
 
@@ -201,6 +185,8 @@ def Objective_Function(AllDecision, args):
 
 def Weight_Cons(AllDecision, args):
     
+    # WeighCons_args = [self.Vehicle_Number, self.UnRellocated_Order, self.Records, self.Rat_Load, self.Weight_Pac, self.Transport_Order]
+    
     self = args[0]
     # 决策变量: i*j 
     x = AllDecision[0:self.Vehicle_Number*len(self.UnRellocated_Order)]
@@ -288,6 +274,7 @@ def Generate_DecisionVar(self):
     return x0, AllDecision
 
 def Minimize_Main(self):
+    WeighCons_args = [self.Vehicle_Number, self.UnRellocated_Order, self.Records, self.Rat_Load, self.Weight_Pac, self.Transport_Order]
     x0, bnds = Generate_DecisionVar(self)
     WeighCons = {'type': 'ineq', 'fun': Weight_Cons, 'args': (self,)}
     PackAllCons = {'type': 'eq', 'fun': Pack_Cons, 'args': (self,)}
